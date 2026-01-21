@@ -101,8 +101,28 @@ footer::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;back
 .form-label{font-weight:700;color:#374151;margin-bottom:8px;display:block}
 .form-input{width:100%;padding:15px;border:2px solid #e5e7eb;border-radius:12px;font-size:16px;transition:border-color .3s;font-family:'Cairo',sans-serif}
 .form-input:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
-.card-row{display:grid;grid-template-columns:1fr 80px;gap:15px}
+.card-row{display:grid;grid-template-columns:2fr 1fr;gap:15px}
 .cvv-input{width:100%}
+
+/* Card Number Special Styling */
+#cardNumber {
+    direction: ltr !important;
+    text-align: left !important;
+    unicode-bidi: embed;
+    font-family: 'Courier New', monospace !important;
+    letter-spacing: 2px;
+    font-size: 18px;
+}
+
+/* Card Holder Name - English Only */
+#cardName {
+    text-transform: uppercase;
+    font-weight: 600;
+    direction: ltr !important;
+    text-align: left !important;
+    unicode-bidi: embed;
+}
+
 .pay-btn{background:linear-gradient(45deg,#10b981,#059669);color:#fff;padding:16px 40px;border:none;border-radius:25px;font-weight:800;font-size:18px;cursor:pointer;width:100%;transition:all .3s;margin-top:10px}
 .pay-btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(16,185,129,0.4)}
 .otp-section{display:none;text-align:center;padding:30px;background:#f8fafc;border-radius:20px;margin-top:20px}
@@ -123,7 +143,7 @@ section{padding:60px 20px}
 </style>
 </head>
 <body>
-<a href="https://wa.me/201140628132" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+<a href="https://wa.me/201140628133" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
 
 
 <header>
@@ -175,11 +195,11 @@ section{padding:60px 20px}
 <div class="footer-links">
 <a href="#products">الكورسات</a>
 <a href="#about">عن الأكاديمية</a>
-<a href="https://wa.me/201140628132" target="_blank">تواصل واتساب</a>
+<a href="https://wa.me/201140628133" target="_blank">تواصل واتساب</a>
 <a href="mailto:support@korsatna.com">الإيميل</a>
 </div>
 <div class="contact-info">
-📱 <a href="https://wa.me/201140628132" style="color:#25D366;font-weight:800;font-size:20px;text-decoration:none;" target="_blank">01140628132</a> | 🕒 24/7 جميع أيام الأسبوع
+📱 <a href="https://wa.me/201140628133" style="color:#25D366;font-weight:800;font-size:20px;text-decoration:none;" target="_blank">01140628133</a> | 🕒 24/7 جميع أيام الأسبوع
 </div>
 <div style="margin-top:30px;font-size:14px;color:#6b7280">© 2026 كورساتنا - جميع الحقوق محفوظة</div>
 </div>
@@ -276,14 +296,14 @@ function openPayment(total){
         
         <div id="visaForm" class="payment-form active">
             <div class="form-group">
-                <label class="form-label">رقم البطاقة</label>
-                <input type="text" class="form-input" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                <label class="form-label">رقم البطاقة (16 رقم)</label>
+                <input type="text" class="form-input" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19">
             </div>
             <div class="form-group">
-                <label class="form-label">اسم حامل البطاقة</label>
-                <input type="text" class="form-input" id="cardName" placeholder="احمد محمد علي">
+                <label class="form-label">اسم حامل البطاقة (بالإنجليزية فقط)</label>
+                <input type="text" class="form-input" id="cardName" placeholder="AHMED MOHAMED ALI">
             </div>
-            <div style="display:grid;grid-template-columns:2fr 1fr;gap:15px">
+            <div class="card-row">
                 <div class="form-group">
                     <label class="form-label">تاريخ الانتهاء</label>
                     <input type="text" class="form-input" id="expiryDate" placeholder="MM/YY" maxlength="5">
@@ -322,12 +342,29 @@ function openPayment(total){
     `;
     document.body.appendChild(modal);
     
-    // تنسيق رقم البطاقة
+    // تنسيق رقم البطاقة - 16 رقم بالضبط - من الشمال لليمين
     const cardInput = document.getElementById('cardNumber');
     cardInput.addEventListener('input', function(e) {
         let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
-        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+        if (value.length > 16) value = value.substring(0, 16); // حد أقصى 16 رقم
+        
+        let formattedValue = '';
+        for (let i = 0; i < value.length; i += 4) {
+            formattedValue += value.substring(i, i + 4) + ' ';
+        }
+        formattedValue = formattedValue.trim();
         e.target.value = formattedValue;
+    });
+    
+    // منع الحروف العربية في اسم حامل البطاقة - إنجليزي فقط
+    const cardNameInput = document.getElementById('cardName');
+    cardNameInput.addEventListener('input', function(e) {
+        let value = e.target.value;
+        // السماح بالحروف الإنجليزية والمسافات فقط
+        value = value.replace(/[^\x00-\x7F\s]/g, '');
+        value = value.replace(/\s+/g, ' ').trim();
+        value = value.toUpperCase();
+        e.target.value = value;
     });
     
     // تنسيق تاريخ الانتهاء
@@ -350,12 +387,21 @@ function selectPaymentMethod(method) {
 }
 
 function processVisaPayment() {
-    const cardNum = document.getElementById('cardNumber').value;
+    const cardNum = document.getElementById('cardNumber').value.replace(/\s/g, '');
     const cardName = document.getElementById('cardName').value;
     const expiry = document.getElementById('expiryDate').value;
     const cvv = document.getElementById('cvv').value;
     
-    if (!cardNum || !cardName || !expiry || !cvv) {
+    // التحقق من 16 رقم بالضبط
+    if (cardNum.length !== 16) {
+        alert('رقم البطاقة يجب أن يكون 16 رقم بالضبط');
+        return;
+    }
+    if (!/^[A-Z\s]+$/.test(cardName)) {
+        alert('اسم حامل البطاقة يجب أن يكون بالإنجليزية فقط');
+        return;
+    }
+    if (!cardName || !expiry || !cvv) {
         alert('يرجى ملء جميع الحقول');
         return;
     }
